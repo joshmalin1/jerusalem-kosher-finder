@@ -361,16 +361,14 @@ function todayBanner(now){
 }
 // ---- Pesach view (driven by the calendar above)
 const HTODAY=hFromFixed(gFixed(new Date().getFullYear(),new Date().getMonth()+1,new Date().getDate()));
-let pesachView = HTODAY.m===1 && HTODAY.d>=8 && HTODAY.d<=22;
+const pesachView = HTODAY.m===1 && HTODAY.d>=8 && HTODAY.d<=22;
 let pf={open:false,kit:false,geb:false};
 function renderPesachChips(){
   const c=$("#pesachChips"); c.hidden=!pesachView;
   c.innerHTML=`<span class="locmsg" style="align-self:center">Pesach:</span>`+
-   [["open","Open on Pesach"],["kit","No kitniyot"],["geb","Non-gebrokts"]].map(([k,l])=>`<button class="chip" data-p="${k}" aria-pressed="${pf[k]}">${l}</button>`).join("")+
-   `<button class="chip" data-p="off">Hide Pesach view</button>`;
+   [["open","Open on Pesach"],["kit","No kitniyot"],["geb","Non-gebrokts"]].map(([k,l])=>`<button class="chip" data-p="${k}" aria-pressed="${pf[k]}">${l}</button>`).join("");
 }
 $("#pesachChips").addEventListener("click",e=>{const b=e.target.closest(".chip");if(!b)return;const k=b.dataset.p;
-  if(k==="off"){pesachView=false;pf={open:false,kit:false,geb:false};renderChips();renderPesachChips();render();return}
   pf[k]=!pf[k];renderPesachChips();render();});
 
 // ---- Plus code (Open Location Code) decoder, short codes recovered near Jerusalem
@@ -441,10 +439,10 @@ const esc=s=>String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&g
 function chip(id,label,color,on){return `<button class="chip" data-id="${id}" aria-pressed="${on}">${color?`<span class="dot" style="--c:${color}"></span>`:""}${label}</button>`}
 function renderChips(){
   $("#hechChips").innerHTML = Object.entries(H).map(([id,v])=>chip(id,v.label,v.c,state.h.has(id))).join("");
-  $("#kindChips").innerHTML = Object.entries(K).map(([id,l])=>chip(id,l,`var(--${id})`,state.k.has(id))).join("")+`<button class="chip" id="pesachToggle" aria-pressed="${pesachView}">🍷 Pesach view</button>`;
+  $("#kindChips").innerHTML = Object.entries(K).map(([id,l])=>chip(id,l,`var(--${id})`,state.k.has(id))).join("");
 }
 $("#hechChips").addEventListener("click",e=>{const b=e.target.closest(".chip");if(!b)return;const id=b.dataset.id;state.h.has(id)?state.h.delete(id):state.h.add(id);save();renderChips();render()});
-$("#kindChips").addEventListener("click",e=>{const b=e.target.closest(".chip");if(!b)return;if(b.id==="pesachToggle"){pesachView=!pesachView;if(!pesachView)pf={open:false,kit:false,geb:false};renderChips();renderPesachChips();render();return}const id=b.dataset.id;state.k.has(id)?state.k.delete(id):state.k.add(id);save();renderChips();render()});
+$("#kindChips").addEventListener("click",e=>{const b=e.target.closest(".chip");if(!b)return;const id=b.dataset.id;state.k.has(id)?state.k.delete(id):state.k.add(id);save();renderChips();render()});
 
 $("#q").addEventListener("input",e=>{state.q=e.target.value.trim().toLowerCase();$("#searchWrap").classList.toggle("has",!!state.q);render()});
 $("#clearQ").addEventListener("click",()=>{$("#q").value="";state.q="";$("#searchWrap").classList.remove("has");render();$("#q").focus()});
