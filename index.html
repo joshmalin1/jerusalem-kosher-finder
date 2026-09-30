@@ -53,6 +53,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .search .clear{color:var(--muted);padding:2px 4px;display:none}
 .search.has .clear{display:block}
 
+[hidden]{display:none!important}
 .chips{display:flex;gap:6px;overflow-x:auto;padding:8px 0 2px;margin:0 -16px;padding-left:16px;padding-right:16px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:none;border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-size:14px;font-weight:600;color:var(--muted);white-space:nowrap;transition:background .12s,color .12s}
@@ -365,6 +366,7 @@ const pesachView = HTODAY.m===1 && HTODAY.d>=8 && HTODAY.d<=22;
 let pf={open:false,kit:false,geb:false};
 function renderPesachChips(){
   const c=$("#pesachChips"); c.hidden=!pesachView;
+  if(!pesachView){c.innerHTML="";return}
   c.innerHTML=`<span class="locmsg" style="align-self:center">Pesach:</span>`+
    [["open","Open on Pesach"],["kit","No kitniyot"],["geb","Non-gebrokts"]].map(([k,l])=>`<button class="chip" data-p="${k}" aria-pressed="${pf[k]}">${l}</button>`).join("");
 }
