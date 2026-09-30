@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jerusalem Kosher Finder – Eidah, Rubin, Agudah, Landau, Efrati</title>
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#ffffff; --ink:#17201c; --muted:#5e6862; --line:#e6e1d6; --soft:#f4f1ea;
+  --green:#1e5a3e; --gold:#a97e1e;
+  --eidah:#1e5a3e; --rubin:#1f4e8c; --agudah:#5b3a8a; --landau:#8a3a2a; --efrati:#0f6e6e; --ou:#8a5a12;
+  --meat:#b23a3a; --dairy:#2b6cb0; --pareve:#5f8a3a;
+  --warn:#b7791f; --warnbg:#fdf3dc;
+  --radius:6px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#131715; --ink:#eae6dc; --muted:#a8b0aa; --line:#2b332e; --soft:#1b211d;
+    --green:#7fc79f; --gold:#d9b25a;
+    --eidah:#7fc79f; --rubin:#8fb3ea; --agudah:#b79ce0; --landau:#e0937f; --efrati:#6fc7c7; --ou:#e2b25a;
+    --meat:#e28a8a; --dairy:#8fb3ea; --pareve:#a5cf7a;
+    --warn:#e2b14b; --warnbg:#2a2415;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#131715; --ink:#eae6dc; --muted:#a8b0aa; --line:#2b332e; --soft:#1b211d;
+  --green:#7fc79f; --gold:#d9b25a;
+  --eidah:#7fc79f; --rubin:#8fb3ea; --agudah:#b79ce0; --landau:#e0937f; --efrati:#6fc7c7; --ou:#e2b25a;
+  --meat:#e28a8a; --dairy:#8fb3ea; --pareve:#a5cf7a;
+  --warn:#e2b14b; --warnbg:#2a2415;
+}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 150px);height:100%}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,.name{font-family:Georgia,"Times New Roman",serif}
+a{color:var(--green)}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+.wrap{max-width:760px;margin:0 auto;padding:0 16px 48px}
+
+/* Sticky control bar */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);margin:0 -16px;padding:10px 16px 8px}
+.bar h1{margin:0 0 6px;font-size:22px;font-weight:700;line-height:1.15}
+.bar h1 small{display:block;font-family:system-ui,sans-serif;font-weight:400;font-size:13px;color:var(--muted)}
+.search{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:var(--radius);padding:8px 10px;background:var(--soft)}
+.search input{flex:1;border:0;background:transparent;font:inherit;color:inherit;min-width:0}
+.search input:focus{outline:none}
+.search svg{flex:none;width:18px;height:18px;stroke:var(--muted);fill:none;stroke-width:2}
+.search .clear{color:var(--muted);padding:2px 4px;display:none}
+.search.has .clear{display:block}
+
+.chips{display:flex;gap:6px;overflow-x:auto;padding:8px 0 2px;margin:0 -16px;padding-left:16px;padding-right:16px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-size:14px;font-weight:600;color:var(--muted);white-space:nowrap;transition:background .12s,color .12s}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px;background:var(--c,var(--muted))}
+.chip[aria-pressed="true"] .dot{outline:2px solid var(--bg)}
+
+.tabs{display:flex;gap:18px;margin-top:6px;border-top:1px solid var(--line);padding-top:6px}
+.tab{padding:4px 0;font-weight:600;color:var(--muted);border-bottom:2px solid transparent}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--gold)}
+
+.status{font-size:14px;color:var(--muted);margin:14px 0 6px}
+.notice.closed{border-left-color:var(--meat)}
+.notice.info{border-left-color:var(--green);background:var(--soft)}
+.notice b{display:block}
+.notice b{display:block;margin-bottom:2px}
+.notice.calm{border-left-color:var(--green);background:var(--soft)}
+.notice{background:var(--warnbg);border-left:3px solid var(--warn);padding:10px 12px;border-radius:0 var(--radius) var(--radius) 0;font-size:14px;margin:14px 0}
+
+/* Results */
+.group{margin-top:22px}
+.group h2{font-size:15px;font-weight:700;margin:0 0 2px;color:var(--gc);letter-spacing:.01em}
+.group h2 span{font-family:system-ui,sans-serif;font-weight:400;color:var(--muted);font-size:13px;margin-left:8px}
+.row{border-top:1px solid var(--line)}
+.row:last-child{border-bottom:1px solid var(--line)}
+.head{width:100%;text-align:left;display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:baseline;padding:12px 0}
+.kind{width:10px;height:10px;border-radius:50%;background:var(--k);align-self:center}
+.name{font-size:18px;font-weight:500;line-height:1.2}
+.name .heb{font-size:14px;color:var(--muted);margin-left:6px;font-weight:500}
+.sub{font-size:14px;color:var(--muted);grid-column:2;margin-top:2px}
+.price{font-size:14px;color:var(--muted);white-space:nowrap;letter-spacing:1px}
+.warnmark{color:var(--warn);font-weight:700;margin-left:4px}
+.detail{display:none;padding:2px 0 16px 20px;font-size:15px}
+.row.open .detail{display:block}
+.detail dl{margin:0;display:grid;grid-template-columns:96px 1fr;gap:6px 10px}
+.detail dt{color:var(--muted);font-size:14px}
+.detail dd{margin:0}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:var(--radius);padding:7px 12px;font-size:14px;font-weight:600;text-decoration:none;color:var(--ink);background:var(--soft)}
+.btn.primary{background:var(--green);border-color:var(--green);color:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn.primary{color:#0f1a14}}
+:root[data-theme="dark"] .btn.primary{color:#0f1a14}
+.stamp{display:inline-block;font-size:13px;font-weight:700;color:var(--hc);border:1.5px solid var(--hc);border-radius:3px;padding:0 6px;line-height:1.5;margin-right:6px}
+.warnbox{background:var(--warnbg);border-left:3px solid var(--warn);padding:8px 10px;margin:10px 0 0;font-size:14px;border-radius:0 var(--radius) var(--radius) 0}
+.empty{padding:40px 0;text-align:center;color:var(--muted)}
+
+/* Excluded / unconfirmed tables */
+.plain{margin-top:16px}
+.plain .row{padding:10px 0;display:grid;grid-template-columns:1fr;gap:2px}
+.plain .n{font-weight:700}
+.plain .r{font-size:14px;color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:13px;color:var(--muted);margin-top:10px}
+.locmsg{font-size:13px;color:var(--muted);padding:2px 0 4px;min-height:16px}
+select.chip{appearance:none;-webkit-appearance:none;background:var(--bg);padding-right:22px;background-image:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 10 6%27%3E%3Cpath d=%27M0 0l5 6 5-6z%27 fill=%27%23888%27/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;background-size:8px}
+.walk{font-weight:700;color:var(--green);white-space:nowrap}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;background:var(--k)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <h1>Jerusalem kosher finder <small>Verified Eidah, Rav Rubin, Agudah, Landau, Efrati and OU places · calendar-aware</small></h1>
+    <div class="search" id="searchWrap">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="Search name, food, street, neighborhood…" autocomplete="off" aria-label="Search restaurants">
+      <button class="clear" id="clearQ" aria-label="Clear search">✕</button>
+    </div>
+    <div class="chips" id="hechChips" role="group" aria-label="Filter by hechsher"></div>
+    <div class="chips" id="kindChips" role="group" aria-label="Filter by meat or dairy"></div>
+    <div class="chips" id="locBar">
+      <button class="chip" id="locBtn">📍 Use my location</button>
+      <select class="chip" id="landmark" aria-label="Or pick where you are"><option value="">…or I'm near</option></select>
+      <button class="chip" id="coordBtn">Paste Plus Code / Maps link</button>
+      <button class="chip" id="clearLoc" hidden>✕ Clear</button>
+    </div>
+    <div class="locmsg" id="locMsg"></div>
+    <div class="chips" id="walkChips" role="group" aria-label="Max walking time" hidden></div>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" aria-selected="true" data-tab="verified">Verified</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="unconfirmed">Single-source</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="excluded">Excluded</button>
+    </div>
+  </div>
+
+  <section id="verified">
+    <div class="notice" id="banner"></div>
+    <div class="chips" id="pesachChips" role="group" aria-label="Pesach filters" hidden></div>
+    <div class="status" id="status"></div>
+    <div id="results"></div>
+    <div class="legend"><span><i style="--k:var(--meat)"></i>Meat</span><span><i style="--k:var(--dairy)"></i>Dairy</span><span><i style="--k:var(--pareve)"></i>Pareve</span><span>⚠ = conflicting reports, check teudah</span></div>
+  </section>
+
+  <section id="unconfirmed" hidden>
+    <div class="status">Reported with an accepted hechsher by only one source (mostly the DansDeals wiki, edited 15 Sept 2026). Not independently confirmed — check the teudah on site.</div>
+    <div class="plain" id="unconfList"></div>
+  </section>
+
+  <section id="excluded" hidden>
+    <div class="status">Popular places that were checked and left out, with the reason.</div>
+    <div class="plain" id="exclList"></div>
+  </section>
+</div>
+
+<script>
+const H = {
+  eidah:{label:"Eidah HaChareidis",c:"var(--eidah)"},
+  rubin:{label:"Rav Rubin",c:"var(--rubin)"},
+  agudah:{label:"Agudas Yisrael",c:"var(--agudah)"},
+  landau:{label:"Rav Landau",c:"var(--landau)"},
+  efrati:{label:"Rav Efrati",c:"var(--efrati)"},
+  ou:{label:"OU",c:"var(--ou)"}
+};
+const K = {meat:"Meat",dairy:"Dairy",pareve:"Pareve"};
+const M = q => "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(q+", Jerusalem");
+
+const R = [
+// EIDAH
+{n:"Entrecote",heb:"אנטרקוט",h:"eidah",k:"meat",t:"Upscale steakhouse",area:"Har Hotzvim",addr:"Kiryat HaMada 22",lat:31.8041759,lng:35.2060979,phone:"073-702-7317",price:4,nut:"High-protein",order:"Grilled chicken breast or steak with salad",rev:"Google 4.3 (3,134) · TA 3.7 (129). Strong steaks and service, pricey",hours:"Sun–Thu 12:30–23:00; closed Fri/Shabbat",proof:"https://www.eluna.com/rest/Entrecote_jerusalem.asp?mumu=1269&name=Entrecote+Jerusalem",plabel:"eLuna, July 2025"},
+{n:"Caballero",heb:"קבלרו",h:"eidah",k:"meat",t:"Chef steakhouse",area:"Har Hotzvim",addr:"HaMarpe 1",lat:31.8010328,lng:35.21167,price:4,nut:"High-protein",order:"Lamb chops or sliced-meat platter with salads",rev:"TA 4.0 (4). Elegant room, creative dishes",hours:"Sun–Thu 18:00–23:00; Motzei Shabbat 20:00–00:00",proof:"https://www.shemesh.co.il/en/deals/caballero-jerusalem-chef-restaurant-dine-in-style",plabel:"shemesh.co.il",warn:"JDN says Eidah but the Feb 2026 Metaylim BeKipa list says Kehilot. Check the teudah before going."},
+{n:"Kruizer's",heb:"קרויזר",h:"eidah",k:"meat",t:"Grill / steakhouse",area:"Geula",addr:"Chasidei Karlin 16",lat:31.788419,lng:35.2238025,price:3,nut:"High-protein",order:"Grilled skewers with salad",rev:"easy.co.il 8.6",hours:"Call",proof:"https://easy.co.il/en/page/26116133",plabel:"easy.co.il"},
+{n:"Yosela Ramot",h:"eidah",k:"meat",t:"Grill",area:"Ramot",addr:"HaRav Wallenstein 53",lat:31.820183,lng:35.198587,price:2,nut:"High-protein",order:"Grilled meats",rev:"easy.co.il 8.5",hours:"Call",proof:"https://easy.co.il/en/list/Restaurants-and-Fast-Food?c2=16243&region=933",plabel:"easy.co.il Eidah list"},
+{n:"Zalman's",heb:"זלמנ'ס",h:"eidah",k:"meat",t:"Deli / meat fast-casual",area:"Romema",addr:"Yirmiyahu 9",lat:31.7921765,lng:35.209895,price:2,nut:"Mixed",order:"Sliced-meat plate beats a sausage sandwich",rev:"—",hours:"Call",proof:"https://zalmans.co.il/",plabel:"zalmans.co.il (all meat Eidah; some sausages Rubin)"},
+{n:"Hadar Geula",h:"eidah",k:"meat",t:"Traditional Ashkenazi",area:"Geula",addr:"Givat Moshe 5",lat:31.7974861,lng:35.2168589,price:2,nut:"Balanced to heavy",order:"Roast chicken with vegetables",rev:"easy.co.il 8.5",hours:"Call",proof:"https://easy.co.il/en/list/Restaurants-and-Fast-Food?c2=16243&region=933",plabel:"easy.co.il Eidah list"},
+{n:"Benni's American Food",h:"eidah",k:"meat",t:"American fast food",area:"Geula",addr:"Adoniyahu HaCohen 9",lat:31.7918446,lng:35.2202797,price:2,nut:"Fried / fast food",order:"Plain burger with salad instead of fries",rev:"easy.co.il 8.4",hours:"Opens 17:00",proof:"https://easy.co.il/en/list/Restaurants-and-Fast-Food?c2=16243&region=933",plabel:"easy.co.il Eidah list"},
+{n:"La Casa",h:"eidah",k:"meat",t:"Restaurant (type unconfirmed)",area:"Geula",addr:"Yaakov Meir 12",lat:31.7879002,lng:35.2158275,price:2,nut:"—",order:"",rev:"easy.co.il 8.4",hours:"Call",proof:"https://easy.co.il/en/list/Restaurants-and-Fast-Food?c2=16243&region=933",plabel:"easy.co.il Eidah list"},
+{n:"Falafel Eshtanur",h:"eidah",k:"pareve",t:"Falafel",area:"Romema",addr:"Sarei Yisrael 15",lat:31.7890765,lng:35.2062631,price:1,nut:"Carb-heavy, fried",order:"Falafel plate with salad and tahini",rev:"easy.co.il 8.4",hours:"Call",proof:"https://easy.co.il/en/list/Restaurants-and-Fast-Food?c2=16243&region=933",plabel:"easy.co.il Eidah list"},
+{n:"Miro's Falafel",h:"eidah",k:"pareve",t:"Falafel",area:"Beis Yisroel (near the Mir)",addr:"HaRav Zonnenfeld 10",lat:31.788457,lng:35.2243975,price:1,nut:"Carb-heavy, fried",order:"",rev:"DansDeals user: “best in the country”",hours:"Call",proof:"https://www.kosherest.co.il/rests/jerusalem/2204-%D7%9E%D7%99%D7%A8%D7%95",plabel:"kosherest"},
+{n:"Sushi N Bagels",h:"eidah",k:"dairy",t:"Sushi + bagels (fish)",area:"Romema",addr:"Yirmiyahu 68",lat:31.791291,lng:35.202809,price:2,nut:"Protein plus carbs",order:"Salmon or tuna rolls; sashimi where offered",rev:"easy 8.7 · Wolt 8.4–8.6",hours:"Wolt opens 10:00",proof:"https://www.eluna.com/rest/SushiNBagels.asp",plabel:"eLuna (“only Eidah sushi in Israel”)"},
+{n:"Bush Bagels",h:"eidah",k:"dairy",t:"Bagels, salads, pasta",area:"Kiryat Sanz",addr:"Tsfanya 61",lat:31.7935342,lng:35.2152704,phone:"02-651-4123",price:2,nut:"Carb-heavy",order:"Big salad or omelette with a half bagel",rev:"easy.co.il 8.7",hours:"Call",proof:"https://charedi.net/en/restaurants/5735/",plabel:"charedi.net"},
+{n:"Big Bite",h:"eidah",k:"dairy",t:"Pizza, salad, sandwiches",area:"Rav Shefa mall",addr:"Shamgar 16",lat:31.7947479,lng:35.208407,price:2,nut:"Carb-heavy",order:"Salad with cheese or eggs",rev:"easy.co.il 8.6",hours:"Call",proof:"https://wolt.com/he/isr/jerusalem/restaurant/big-bitejeru/items/menucategory-2",plabel:"Wolt"},
+{n:"Ice Story",heb:"אייסטורי",h:"eidah",k:"dairy",t:"Dairy restaurant, ice cream",area:"Rav Shefa mall",addr:"Shamgar 14",lat:31.7947479,lng:35.208407,price:2,nut:"Sweet / dessert",order:"Salads or fish for a healthier choice",rev:"—",hours:"Call",proof:"https://easy.co.il/en/page/10016305",plabel:"easy.co.il"},
+{n:"Motza'le",h:"eidah",k:"dairy",t:"Café",area:"Romema",addr:"Yechiel M. Steinberg 1",lat:31.7940026,lng:35.1682898,price:2,nut:"Balanced",order:"Shakshuka or omelette",rev:"easy.co.il 8.9",hours:"Call",proof:"https://easy.co.il/en/list/Restaurants-and-Fast-Food?c2=16243&region=933",plabel:"easy.co.il Eidah list"},
+{n:"Nishnush",h:"eidah",k:"dairy",t:"Café",area:"Geula",addr:"Chana 11",lat:31.7942898,lng:35.2133482,price:2,nut:"Balanced",order:"",rev:"easy.co.il 8.7",hours:"Call",proof:"https://easy.co.il/en/list/Restaurants-and-Fast-Food?c2=16243&region=933",plabel:"easy.co.il Eidah list"},
+{n:"Pizza Papa Brazil",h:"eidah",k:"dairy",t:"Pizza",area:"Kiryat HaYovel",addr:"Brazil 24",lat:31.7646827,lng:35.1724699,price:1,nut:"Carb-heavy",order:"",rev:"easy.co.il 9.1 (highest on list)",hours:"Call",proof:"https://easy.co.il/en/list/Restaurants-and-Fast-Food?c2=16243&region=933",plabel:"easy.co.il Eidah list"},
+{n:"Pizza Domino",h:"eidah",k:"dairy",t:"Pizza",area:"French Hill",addr:"HaHagana 21",lat:31.8024403,lng:35.238491,phone:"02-587-7788",price:1,nut:"Carb-heavy",order:"",rev:"easy.co.il 8.8",hours:"Call",proof:"https://oukosher.org/blog/ou-kosher-restaurants/yeshiva-week-restaurants/",plabel:"OU Kosher Jan 2026 (also on easy.co.il Eidah list)"},
+{n:"Pizza Beytit",h:"eidah",k:"dairy",t:"Pizza",area:"Kiryat Sanz",addr:"Tsfanya 72",lat:31.7934253,lng:35.2151646,price:1,nut:"Carb-heavy",order:"",rev:"easy.co.il 8.5",hours:"Call",proof:"https://easy.co.il/en/list/Restaurants-and-Fast-Food?c2=16243&region=933",plabel:"easy.co.il Eidah list"},
+{n:"Halavitos",h:"eidah",k:"dairy",t:"Pizza",area:"City center",addr:"Ben Hillel 5",lat:31.78205,lng:35.2175291,price:1,nut:"Carb-heavy",order:"",rev:"easy.co.il 8.3",hours:"Call",proof:"https://easy.co.il/en/list/Restaurants-and-Fast-Food?c2=16243&region=933",plabel:"easy.co.il Eidah list"},
+{n:"J2 Pizza (Jerusalem II)",h:"eidah",k:"dairy",t:"Pizza",area:"Har Nof",addr:"HaRav Yitzhak Hai Taib 48",lat:31.7828231,lng:35.1717746,phone:"02-654-0977",price:1,nut:"Carb-heavy",order:"",rev:"easy.co.il 8.4",hours:"Call",proof:"https://easy.co.il/en/list/Restaurants-and-Fast-Food?c2=16243&region=933",plabel:"easy.co.il Eidah list"},
+// RUBIN
+{n:"Rodriguez",heb:"רודריגז",h:"rubin",k:"meat",t:"Upscale steakhouse",area:"Har Hotzvim",addr:"Kiryat HaMada 3 (GTI Tower)",lat:31.8006855,lng:35.2101508,phone:"02-581-5815",price:4,nut:"High-protein",order:"Asado or lamb chops with salad",rev:"TA 4.1 (75). Big portions, high prices",hours:"Lunch 13:30–16:00, dinner 18:00–22:30; Fri/Motzei Shabbat events only",proof:"https://rodriguezrest.co.il/en/",plabel:"own site",warn:"Own site and eLuna say Rav Rubin, but a May 2025 eLuna auction page says Machpud. Check the teudah."},
+{n:"Shimmy's",heb:"שימיס",h:"rubin",k:"meat",t:"Meat fast-casual",area:"Ramat Eshkol",addr:"Paran 7",lat:31.8008629,lng:35.2277396,price:2,nut:"High-protein",order:"Grilled meat plate",rev:"—",hours:"Call",proof:"https://www.shimmys.co.il/%D7%A1%D7%A0%D7%99%D7%A4%D7%99%D7%9D/",plabel:"shimmys.co.il (©2026)"},
+{n:"Ima",heb:"אמא",h:"rubin",k:"meat",t:"Kurdish home cooking",area:"—",addr:"Ima restaurant",price:2,nut:"Balanced",order:"Soups and stuffed vegetables; kubbeh are carb-heavy",rev:"—",hours:"Call",proof:"https://charedi.net/en/restaurants/5739/",plabel:"charedi.net"},
+{n:"Burger Bite",h:"rubin",k:"meat",t:"Burgers, baguettes",area:"Rav Shefa mall",addr:"Shamgar 16",lat:31.7947479,lng:35.208407,price:2,nut:"High-protein, fried",order:"220 g burger without the bun, or chicken burger",rev:"Wolt 8.6 · RestaurantGuru 4.0 (343)",hours:"Sun–Thu 11:00–23:30; Motzei Shabbat delivery",proof:"https://wolt.com/en/isr/jerusalem/restaurant/burger-bitej",plabel:"Wolt"},
+{n:"In Burger",h:"rubin",k:"meat",t:"Burgers",area:"Ramat Eshkol",addr:"Paran 9",lat:31.8008006,lng:35.228072,price:2,nut:"High-protein, fried",order:"",rev:"—",hours:"Sun–Thu 11:00–22:30",proof:"https://easy.co.il/en/page/26866639",plabel:"easy.co.il"},
+{n:"Rizz Burger",h:"rubin",k:"meat",t:"Burgers (delivery)",area:"—",addr:"Rizz Burger",price:2,nut:"Fried / fast food",order:"",rev:"Wolt 8.8–9.0",hours:"See Wolt",proof:"https://wolt.com/en/isr/jerusalem/category/burgers",plabel:"Wolt"},
+{n:"Flames",h:"rubin",k:"meat",t:"Burgers / grill (delivery)",area:"—",addr:"Flames burger",price:2,nut:"Fried / fast food",order:"",rev:"Wolt 7.6",hours:"See Wolt",proof:"https://wolt.com/en/isr/jerusalem/category/burgers",plabel:"Wolt"},
+{n:"Atza Sushi Bar",h:"rubin",k:"meat",t:"Sushi and Asian",area:"Romema",addr:"Yirmiyahu 9",lat:31.7921765,lng:35.209895,phone:"02-502-6232",price:2,nut:"Balanced",order:"Salmon nigiri, poke bowl or sashimi; skip tempura",rev:"Google 4.2 (1,064) · TA 4.3 (15). Fresh sushi, cramped room",hours:"Sun–Thu 12:00–23:00; Fri 10:00–13:30; Motzei Shabbat ~21:45–24:00",proof:"https://taamtaam.com/restaurants/jerusalem/atzasushibar",plabel:"taamtaam (Rubin; Landau also on meat)"},
+{n:"Sam's Bagels (Ramat Eshkol)",h:"rubin",k:"dairy",t:"Bagels",area:"Ramat Eshkol",addr:"Paran 15",lat:31.8007148,lng:35.2268917,phone:"02-581-3388",price:2,nut:"Carb-heavy",order:"Tuna or egg salad plate",rev:"TA 3.7 (18). Mixed service reviews",hours:"Call",proof:"https://easy.co.il/en/page/8832489",plabel:"easy.co.il",warn:"Yaffo branch is Rabbanut Mehadrin, not Rubin."},
+{n:"Sam's Bagels (Geula)",h:"rubin",k:"dairy",t:"Bagels",area:"Geula",addr:"Malchei Yisrael 26",lat:31.7894528,lng:35.215126,price:2,nut:"Carb-heavy",order:"",rev:"easy.co.il 8.3",hours:"Call",proof:"https://easy.co.il/en/page/2793799",plabel:"easy.co.il"},
+{n:"Bagels (Har Nof)",h:"rubin",k:"dairy",t:"Bagels, salads, ice cream",area:"Har Nof",addr:"HaRav Shaulson 58",lat:31.7859888,lng:35.1738227,price:1,nut:"Carb-heavy",order:"Big salad with feta or halloumi",rev:"easy.co.il 8.4",hours:"Call",proof:"https://easy.co.il/en/page/9175984",plabel:"easy.co.il"},
+{n:"Big Apple Pizza (Ramat Eshkol)",h:"rubin",k:"dairy",t:"Pizza, pasta, salads",area:"Ramat Eshkol",addr:"Paran 5",lat:31.8009128,lng:35.2287964,phone:"02-532-7798",price:1,nut:"Carb-heavy",order:"A salad with one slice",rev:"TA 4.0 (3)",hours:"Sun–Wed 10:00–23:00; Thu to 23:30; Fri 09:00–16:00; Motzei Shabbat",proof:"https://wolt.com/en/isr/jerusalem/restaurant/big-apple-pizza-ramat-eshkol",plabel:"Wolt (“Badatz Rubin”)",warn:"Wikipedia says all Jerusalem branches are Rabbanut Mehadrin. Check this branch's teudah."},
+{n:"Waffle Bar (Ramat Eshkol)",h:"rubin",k:"dairy",t:"Dairy café, waffles",area:"Ramat Eshkol",addr:"Paran 7",lat:31.8008629,lng:35.2277396,price:2,nut:"Sweet / dessert",order:"Salads or fish for something healthier",rev:"—",hours:"Call",proof:"https://waffle-bar.co.il/%D7%A1%D7%A0%D7%99%D7%A4%D7%99%D7%9D/",plabel:"waffle-bar.co.il"},
+{n:"Muscat",h:"rubin",k:"dairy",t:"Italian dairy",area:"Givat Shaul",addr:"Kanfei Nesharim 24",lat:31.7879009,lng:35.1874416,price:3,nut:"Balanced",order:"Fish or a salad",rev:"—",hours:"Call",proof:"https://easy.co.il/en/page/10086171",plabel:"easy.co.il (one older listing says Rabbanut)"},
+{n:"Chalav U'Dvash",h:"rubin",k:"dairy",t:"American brunch café, sourdough pizza",area:"French Hill",addr:"HaHagana 21",lat:31.8024403,lng:35.238491,price:2,nut:"Balanced",order:"Eggs or an omelette",rev:"“Line out the door” in its first year",hours:"Call",proof:"https://jamiegeller.com/articles/chalav-udvash-the-jerusalem-cafe-you-have-to-try/",plabel:"Jamie Geller"},
+// AGUDAH
+{n:"Sheyan",heb:"שיאן",h:"agudah",k:"meat",t:"Upscale Chinese / pan-Asian, sushi",area:"Rehavia (the Windmill)",addr:"Ramban 8",lat:31.7750121,lng:35.2166564,phone:"02-561-2007",price:3,nut:"Balanced to high-protein",order:"Sea bass with ginger or beef stir-fry; skip tempura chicken",rev:"Google 4.3 (1,229) · TA 4.1 (182). Authentic, elegant, not cheap",hours:"Sun–Thu 12:00–23:00; Motzei Shabbat",proof:"https://taamtaam.com/restaurants/jerusalem/sheyan",plabel:"taamtaam"},
+{n:"Take A Wok by Sheyan",h:"agudah",k:"meat",t:"Asian wok",area:"Romema",addr:"Sarei Yisrael 15",lat:31.7890765,lng:35.2062631,price:2,nut:"Balanced",order:"Stir-fry with extra protein",rev:"Wolt 8.8",hours:"See Wolt",proof:"https://charedi.net/en/restaurants/5731/",plabel:"charedi.net"},
+// LANDAU
+{n:"The Jewish Restaurant",heb:"המסעדה היהודית",h:"landau",k:"meat",t:"Traditional home-style / grill",area:"Romema",addr:"Yirmiyahu 23",lat:31.7920484,lng:35.2074583,price:2,nut:"High-protein",order:"Grilled skewers or chicken with salads",rev:"easy.co.il 8.4 (1,160). Good-value sit-down meal",hours:"Call",proof:"https://easy.co.il/en/page/8832192",plabel:"easy.co.il",warn:"Sources conflict: JDN says Eidah, Metaylim BeKipa says Rav Landau. Either way it qualifies."},
+// EFRATI
+{n:"Thirty Three",heb:"ירמיהו 33",h:"efrati",k:"meat",t:"Chef meat restaurant",area:"Romema",addr:"Yirmiyahu 33",lat:31.7907825,lng:35.2028909,price:4,nut:"High-protein",order:"",rev:"New; no rating found",hours:"Call",proof:"https://charedi.net/en/restaurants/31670/",plabel:"charedi.net (Feb 2026)"},
+// --- Added from Hebrew-source pass ---
+{n:"Portobello",heb:"פורטובלו",h:"eidah",k:"dairy",t:"Italian dairy",area:"Geula",addr:"Levush Mordechai 2",lat:31.7893,lng:35.2178,phone:"02-500-4001",price:2,nut:"Balanced",order:"Baked fish over cream pastas",rev:"rest.co.il: generous portions, good service",hours:"Call",proof:"https://www.rest.co.il/rest/80016133/",plabel:"rest.co.il"},
+{n:"Pizza Shemesh (Geula)",heb:"פיצה שמש",h:"eidah",k:"dairy",t:"Pizzeria",area:"Geula",addr:"Yechezkel 8",lat:31.7908,lng:35.2178,phone:"02-500-2690",price:1,nut:"Carb-heavy",order:"",rev:"—",hours:"Call",proof:"https://pizza-shemesh.co.il/category/%D7%A1%D7%A0%D7%99%D7%A4%D7%99%D7%9D/%D7%99%D7%A8%D7%95%D7%A9%D7%9C%D7%99%D7%9D/",plabel:"chain site",warn:"Agripas 42 and Mevaseret branches are Beit Yosef — not this one."},
+{n:"Pizza Shemesh (Beit Vegan)",heb:"פיצה שמש",h:"eidah",k:"dairy",t:"Pizzeria",area:"Beit Vegan",addr:"HaPisga 45",lat:31.7662497,lng:35.1841864,phone:"02-678-3903",price:1,nut:"Carb-heavy",order:"",rev:"—",hours:"Call",proof:"https://pizza-shemesh.co.il/category/%D7%A1%D7%A0%D7%99%D7%A4%D7%99%D7%9D/%D7%99%D7%A8%D7%95%D7%A9%D7%9C%D7%99%D7%9D/",plabel:"chain site"},
+{n:"Pizza Shemesh (Ramot)",heb:"פיצה שמש",h:"eidah",k:"dairy",t:"Pizzeria",area:"Ramot",addr:"Golda Meir 255",lat:31.8175,lng:35.1944444,phone:"02-530-2210",price:1,nut:"Carb-heavy",order:"",rev:"—",hours:"Call",proof:"https://pizza-shemesh.co.il/category/%D7%A1%D7%A0%D7%99%D7%A4%D7%99%D7%9D/%D7%99%D7%A8%D7%95%D7%A9%D7%9C%D7%99%D7%9D/",plabel:"chain site"},
+{n:"Pizza Shemesh (Pisgat Ze'ev)",heb:"פיצה שמש",h:"eidah",k:"dairy",t:"Pizzeria",area:"Pisgat Ze'ev",addr:"Moshe Dayan 164",lat:31.8207161,lng:35.2398863,phone:"02-533-8585",price:1,nut:"Carb-heavy",order:"",rev:"—",hours:"Call",proof:"https://pizza-shemesh.co.il/category/%D7%A1%D7%A0%D7%99%D7%A4%D7%99%D7%9D/%D7%99%D7%A8%D7%95%D7%A9%D7%9C%D7%99%D7%9D/",plabel:"chain site"},
+{n:"Mendelsohn's Pizza",heb:"מנדלסונ'ס",h:"eidah",k:"dairy",t:"NY-style pizza",area:"Givat Shaul",addr:"Beit HaDfus 11",lat:31.7858606,lng:35.1883053,phone:"077-678-0600",price:1,nut:"Carb-heavy",order:"",rev:"Wolt 7.8",hours:"Sun–Thu 10:00–23:00; Motzei Shabbat 20:00–00:30",proof:"https://wolt.com/en/isr/jerusalem/restaurant/mendelsohns-pizza",plabel:"Wolt"},
+{n:"Goldy's",heb:"גולדיס",h:"eidah",k:"meat",t:"Jewish deli, prepared food",area:"Kiryat Belz / Sanhedria",addr:"Ezrat Torah 18",lat:31.7968964,lng:35.2132868,phone:"02-620-0100",price:2,nut:"Mixed",order:"Roast chicken or brisket with vegetable salads; skip kugel and kishke",rev:"Wolt 9.2",hours:"Sun–Wed 11:00–22:00; Thu to 24:00",proof:"https://wolt.com/he/isr/jerusalem/brand/goldys-il",plabel:"Wolt"},
+{n:"Fish Bite",heb:"פיש בייט",h:"eidah",k:"pareve",t:"Fish & chips",area:"Rav Shefa mall",addr:"Shamgar 16",lat:31.7947479,lng:35.208407,phone:"02-538-2660",price:2,nut:"Protein, fried",order:"Ask for grilled rather than battered fish",rev:"—",hours:"Call",proof:"https://rest.jdn.co.il/rest/1469/",plabel:"JDN"},
+{n:"Ma'adanei Geula",heb:"מעדני גאולה",h:"eidah",k:"meat",t:"Meat deli / eatery",area:"Geula",addr:"Strauss 38",lat:31.7879412,lng:35.2187482,price:2,nut:"High-protein",order:"Grilled chicken with salads",rev:"—",hours:"Call",proof:"https://www.402.co.il/biz/58e5e2467d67424ffac247e5/%D7%9E%D7%A2%D7%93%D7%A0%D7%99-%D7%92%D7%90%D7%95%D7%9C%D7%94",plabel:"402.co.il (Feb 2026)"},
+{n:"Pizza Hillel",heb:"פיצה הלל",h:"eidah",k:"dairy",t:"Pizzeria",area:"City center",addr:"Zichron Yaakov 1",lat:31.7956633,lng:35.1995787,price:1,nut:"Carb-heavy",order:"",rev:"—",hours:"Call",proof:"https://www.d.co.il/80320663/39460/",plabel:"d.co.il"},
+{n:"Litov (meat) / Taamon (dairy)",heb:"ליטוב / טעמון",h:"rubin",k:"meat",t:"Hotel steakhouse + dairy dining room",area:"City center",addr:"HaNevi'im 43",lat:31.783914,lng:35.220245,phone:"058-364-7503",price:3,nut:"High-protein",order:"Steak or grilled chicken with salad",rev:"—",hours:"Steakhouse 17:30–22:30",proof:"https://litovhotel.co.il/%D7%9E%D7%A1%D7%A2%D7%93%D7%AA-%D7%9C%D7%99%D7%98%D7%95%D7%91/",plabel:"own site"},
+{n:"Pizzelia",heb:"פיזליה",h:"rubin",k:"dairy",t:"Pizza & pasta",area:"City center",addr:"Moshe Hess 3",lat:31.7757206,lng:35.2211304,phone:"058-790-3939",price:1,nut:"Carb-heavy",order:"",rev:"Wolt 7.8",hours:"Sun–Wed 11:00–23:45; Thu to 02:00; Motzei Shabbat 20:00–01:00",proof:"https://wolt.com/he/isr/jerusalem/restaurant/pizzelia-je",plabel:"Wolt"},
+{n:"Pizza Papido",heb:"פיצה פפידו",h:"rubin",k:"dairy",t:"NY-style pizza",area:"Geula",addr:"Natan Strauss 3",lat:31.7836659,lng:35.2180744,price:2,nut:"Carb-heavy",order:"",rev:"—",hours:"Call",proof:"https://www.kosharot.co.il/index2.php?id=440437&lang=HEB",plabel:"kosharot"},
+{n:"Holy Bagel Ramot",heb:"הולי בייגל בד\"ץ",h:"rubin",k:"dairy",t:"Dairy café, fish",area:"Ramot Mall",addr:"Golda Meir 251",lat:31.8175,lng:35.1944444,phone:"072-391-2222",price:2,nut:"Balanced",order:"Fish dish or omelette with salad",rev:"—",hours:"Sun–Thu 8:00–23:00; Fri 8:00–14:00; Motzei Shabbat to 24:00",proof:"https://www.holybagel-bdz.co.il/en/Restaurant",plabel:"own site",warn:"Other Holy Bagel branches in Jerusalem are Rabbanut Mehadrin."},
+{n:"Waffle Bar (Ramot)",heb:"וופל בר",h:"rubin",k:"dairy",t:"Dairy café, waffles",area:"Ramot Mall",addr:"Golda Meir 251",lat:31.8175,lng:35.1944444,price:2,nut:"Sweet / dessert",order:"",rev:"—",hours:"Call",proof:"https://wolt.com/he/isr/jerusalem/restaurant/waffle-bar-ramot",plabel:"Wolt"},
+{n:"Sam's Burgers",heb:"סאם בורגר",h:"rubin",k:"meat",t:"Burgers",area:"Har Hotzvim",addr:"Kiryat HaMada 3",lat:31.8006855,lng:35.2101508,phone:"053-710-6110",price:2,nut:"High-protein, fried",order:"",rev:"rest.co.il: 4 reviews",hours:"Sun–Thu 11:30–22:00",proof:"https://metaylimbkipa.com/%D7%9E%D7%A1%D7%A2%D7%93%D7%95%D7%AA-%D7%9B%D7%A9%D7%A8%D7%95%D7%AA-%D7%9C%D7%9E%D7%94%D7%93%D7%A8%D7%99%D7%9F-%D7%91%D7%99%D7%A8%D7%95%D7%A9%D7%9C%D7%99%D7%9D/",plabel:"Metaylim BeKipa 2026"},
+{n:"Hummus Eliyahu (Har Hotzvim)",heb:"חומוס אליהו",h:"rubin",k:"pareve",t:"Hummus",area:"Har Hotzvim",addr:"Kiryat HaMada 3",lat:31.8006855,lng:35.2101508,phone:"03-609-4770",price:1,nut:"Balanced",order:"Hummus with egg or ful and salad (~26 g protein)",rev:"—",hours:"Sun–Thu 10:00–19:00",proof:"https://metaylimbkipa.com/%D7%9E%D7%A1%D7%A2%D7%93%D7%95%D7%AA-%D7%9B%D7%A9%D7%A8%D7%95%D7%AA-%D7%9C%D7%9E%D7%94%D7%93%D7%A8%D7%99%D7%9F-%D7%91%D7%99%D7%A8%D7%95%D7%A9%D7%9C%D7%99%D7%9D/",plabel:"Metaylim BeKipa 2026",warn:"Other Hummus Eliyahu branches (Ramot, Center 1, Pisgat Ze'ev) are Kehilot or Beit Yosef."},
+{n:"Shmaltz",heb:"שמאלץ",h:"rubin",k:"meat",t:"Jewish-American deli",area:"Ramat Eshkol",addr:"Paran 7",lat:31.8008629,lng:35.2277396,price:2,nut:"Mixed",order:"Brisket or grilled chicken plate",rev:"—",hours:"Sun–Wed 12:00–22:30; Thu to 23:30; Fri 9:00–15:00",proof:"https://metaylimbkipa.com/%D7%9E%D7%A1%D7%A2%D7%93%D7%95%D7%AA-%D7%9B%D7%A9%D7%A8%D7%95%D7%AA-%D7%9C%D7%9E%D7%94%D7%93%D7%A8%D7%99%D7%9F-%D7%91%D7%99%D7%A8%D7%95%D7%A9%D7%9C%D7%99%D7%9D/",plabel:"Metaylim BeKipa 2026",warn:"An earlier source listed it as Kehilot. Check the teudah."},
+{n:"Melly",heb:"מלי",h:"rubin",k:"meat",t:"Meat sandwiches",area:"Har Nof",addr:"HaRav Shaulzon 58",lat:31.7859888,lng:35.1738227,phone:"02-571-1444",price:2,nut:"High-protein",order:"",rev:"—",hours:"Call",proof:"https://metaylimbkipa.com/%D7%9E%D7%A1%D7%A2%D7%93%D7%95%D7%AA-%D7%9B%D7%A9%D7%A8%D7%95%D7%AA-%D7%9C%D7%9E%D7%94%D7%93%D7%A8%D7%99%D7%9F-%D7%91%D7%99%D7%A8%D7%95%D7%A9%D7%9C%D7%99%D7%9D/",plabel:"Metaylim BeKipa 2026"},
+{n:"Yama",heb:"יאמה",h:"rubin",k:"meat",t:"Asian / sushi",area:"Har Hotzvim",addr:"Kiryat HaMada 3",lat:31.8006855,lng:35.2101508,phone:"02-620-0400",price:2,nut:"Balanced",order:"Stir-fry or sashimi",rev:"—",hours:"Call",proof:"https://metaylimbkipa.com/%D7%9E%D7%A1%D7%A2%D7%93%D7%95%D7%AA-%D7%9B%D7%A9%D7%A8%D7%95%D7%AA-%D7%9C%D7%9E%D7%94%D7%93%D7%A8%D7%99%D7%9F-%D7%91%D7%99%D7%A8%D7%95%D7%A9%D7%9C%D7%99%D7%9D/",plabel:"Metaylim BeKipa 2026"},
+{n:"Red Heifer Steakhouse",heb:"פרה אדומה",h:"efrati",k:"meat",t:"American steakhouse",area:"City center",addr:"King David 26",lat:31.7737404,lng:35.2221105,phone:"02-624-0504",price:4,nut:"High-protein",order:"Steak with salad instead of fries",rev:"—",hours:"Sun–Thu 17:00–22:00",proof:"https://wolt.com/en/isr/jerusalem/restaurant/red-heifer-steakhouse",plabel:"Wolt (Rav Efrati; meat Rubin/Landau)"},
+{n:"HaPtiliya",heb:"הפתילייה",h:"agudah",k:"meat",t:"Mizrachi home cooking, skewers",area:"Mea She'arim",addr:"Beit Yisrael 1",lat:31.7882326,lng:35.2236611,phone:"02-582-9434",price:2,nut:"High-protein",order:"Tsli katef or skewers; kubbeh soup is lighter",rev:"easy.co.il 8.9",hours:"Sun–Thu 7:00–21:00",proof:"https://rest.jdn.co.il/rest/1322/",plabel:"JDN",warn:"Don't confuse with the Rabbanut HaPtiliya in Malha/Talpiot."},
+// --- OU ---
+{n:"Papagaio",heb:"פאפאגאיו",h:"ou",k:"meat",t:"Brazilian churrascaria (all-you-can-eat meat)",area:"Talpiot",addr:"Yad Harutzim 3",lat:31.7540566,lng:35.2174141,phone:"02-674-5745",price:3,nut:"Very high-protein",order:"Skip the bread and rice; lean cuts and the salad bar",rev:"Long-running favorite; tourist-popular",hours:"Call",proof:"https://oukosher.org/blog/ou-kosher-restaurants/yeshiva-week-restaurants/",plabel:"OU Kosher, Jan 2026"},
+{n:"Skyline (Jerusalem Gardens Hotel)",h:"ou",k:"meat",t:"Upscale meat, rooftop",area:"Givat Shaul",addr:"Ze'ev Vilnay 4",lat:31.784846,lng:35.197769,phone:"02-655-8847",price:4,nut:"High-protein",order:"Steak or fish with vegetables",rev:"Highly rated on Tripadvisor",hours:"Call",proof:"https://oukosher.org/blog/ou-kosher-restaurants/yeshiva-week-restaurants/",plabel:"OU Kosher, Jan 2026 (Rubin meat)"},
+{n:"Agas Vetapuach",heb:"אגס ותפוח",h:"ou",k:"dairy",t:"Italian dairy",area:"Safra Square / City Hall",addr:"Safra Square 4",lat:31.7799448,lng:35.2242451,price:3,nut:"Balanced",order:"Fish or a big salad",rev:"DansDeals wiki: OU",hours:"Call",proof:"https://forums.dansdeals.com/index.php?topic=92478.980",plabel:"DansDeals wiki",warn:"Not on the OU's own Jan 2026 Jerusalem list — confirm the teudah."},
+{n:"Mojo's",heb:"מוג'וס",h:"ou",k:"meat",t:"Meat bistro, meat pizza, burgers, wings",area:"City center",addr:"Queen Shlomzion 1",lat:31.7803819,lng:35.22165,phone:"02-663-0438",price:2,nut:"High-protein, fried",order:"Burger without the bun, or grilled wings with salad",rev:"—",hours:"Call",proof:"https://oukosher.org/blog/ou-kosher-restaurants/yeshiva-week-restaurants/",plabel:"OU Kosher, Jan 2026"},
+{n:"Ramada Jerusalem – Timna coffee shop",h:"ou",k:"dairy",t:"Hotel dairy/fish restaurant, soup festival",area:"Givat Shaul",addr:"Ze'ev Vilnay 4",lat:31.784846,lng:35.197769,phone:"02-659-9950",price:3,nut:"Balanced",order:"Grilled fish; the soup festival is filling but carb-heavy",rev:"—",hours:"Call",proof:"https://oukosher.org/blog/ou-kosher-restaurants/yeshiva-week-restaurants/",plabel:"OU Kosher, Jan 2026 (whole hotel OU)"}
+];
+
+const UNCONF = [
+ ["Uzi's Falafel (Yeshayahu St)","Listed as Eidah on DansDeals wiki only"],
+ ["Tokyo Sushi (Zonnenfeld 12, Beis Yisroel)","Listed as Rubin; the Agripas 111 branch shows as Rabbanut Mehadrin"],
+ ["Denver (Derech Chevron)","Listed as Rubin steakhouse on DansDeals wiki only"],
+ ["Greens (Shaarei Chessed)","Listed as Rubin in a July 2025 imamother post"],
+ ["Pastito (Ben Yehuda)","Wolt says “Badatz” without naming which one"],
+ ["Pizza Italy Beit Vegan (Zangwill 1)","Only Sheiris Yisrael restaurant found — but the only evidence is the business's own listing"],
+ ["Yoeli's (Beit Yisrael 2)","Eidah per Glatiul list only"],
+ ["Prime Beef (Center 1, Yirmiyahu 43)","Eidah per Glatiul and meydaga only"],
+ ["Pizza Place (Birkat Avraham 2)","Eidah per 402.co.il only"],
+ ["Bali Italki","Wolt header says Eidah; no address captured"],
+ ["Eliz (Shmuel HaNavi 114 / HaAmalim 5)","Rubin per 402.co.il only"],
+ ["Katzefet ice cream (several branches)","Rubin per a forum post only"],
+ ["Waffle Bar Romema (Shamgar)","Rubin per a forum post only"]
+];
+const EXCL = [
+ ["1868","Rabbanut Jerusalem Mehadrin"],["Eser (Ticho House)","Rabbanut Jerusalem Mehadrin"],
+ ["Veranda (David Citadel)","Rabbanut Mehadrin; only the meat is Rubin/Landau"],
+ ["Luciana / Lucina","Rabbanut Mehadrin"],["Piccolino","Rabbanut Mehadrin"],["Cafe Gan Sipur","Rabbanut Mehadrin"],
+ ["Happy Fish","Rabbanut Mehadrin"],["Greg Kitchen Ramot","Rabbanut Mehadrin"],["Cafe Danya (both)","Rabbanut Mehadrin"],
+ ["Tamara Café","Rabbanut Mehadrin"],["Anthony's Pizza","Rabbanut Mehadrin"],["Hoke Poke","Rabbanut Mehadrin"],
+ ["Cafe Rimon","Rabbanut Mehadrin"],["La Piedra","Rabbanut Mehadrin (2022)"],["Crave","Rabbanut Mehuderet (2022)"],
+ ["Sam's Bagels – Yaffo 33","Rabbanut Mehadrin (Wolt)"],["Big Apple – Ben Yehuda","Rabbanut Mehadrin"],
+ ["Grill Bar (Jerusalem, Mevaseret)","Rav Machpud"],["Tamara Hashiri","Rav Machpud"],["New Deli","Rav Machpud"],
+ ["Hello Yemen","Rav Machpud"],["Burgers Bar","Rav Machpud"],["Tommy's","Rav Machpud"],["Rimon Bistro","Rav Machpud"],
+ ["Ricotta","Badatz Kehilos"],["Noya","Badatz Kehilos"],["Shmaltz","Badatz Kehilos"],
+ ["Aluf","Beit Yosef"],["Hamotzi","Beit Yosef"],["Pita Basar","Beit Yosef"],["Okayama Sushi","Beit Yosef"],
+ ["Burekas Yerushalmi","Beit Yosef"],["Gabriel / Gabriela","Beit Yosef"],["Cafe Cafe Kanfei Nesharim","Beit Yosef"],["Waffle Bar Efrat","Beit Yosef"],
+ ["The Coffee Mill","Tzohar"],
+ ["Pompidou","Plain Rabbanut"],["Sushi Rehavia","Plain Rabbanut"],["Hamigdal","Plain Rabbanut"],["Liba","Plain Rabbanut"],
+ ["Holy Bagel (Jerusalem)","Local Rabbanut Mehadrin; Rubin only in Beit Shemesh"],
+ ["Harvey's, Ruben, Angelica, La Riviera, Goldy's","Could not verify an accepted hechsher"],
+ ["Tzion HaKatan, Orgado, Joy, Musa","Beit Yosef"],["Lechem Basar, Pitmaster, Street Burger, Eshtanur Grill (Yafo 210)","Rav Machpud"],["Kadma / Kinor BaKikar, Andalucia, Cafe Neto, Pizza Deal, Pizza Piato","Rabbanut"],["Lifta, Angelica","Rav Rafael Menat"],["Veranda (David Citadel)","Hotel rabbi; only the meat is Rubin/Landau"]
+];
+
+const $=s=>document.querySelector(s);
+
+// ---- state
+let state = {q:"",h:new Set(),k:new Set(),tab:"verified"};
+try{const s=JSON.parse(localStorage.getItem("jkf")||"null");if(s){state.h=new Set(s.h||[]);state.k=new Set(s.k||[]);}}catch(e){}
+function save(){try{localStorage.setItem("jkf",JSON.stringify({h:[...state.h],k:[...state.k]}))}catch(e){}}
+
+
+// ---- Hebrew calendar (Dershowitz–Reingold), Israel observance
+const HEB_EPOCH=-1373427;
+const hLeap=y=>((7*y+1)%19)<7;
+const hLastMonth=y=>hLeap(y)?13:12;
+function hElapsed(y){const me=Math.floor((235*y-234)/19),pe=12084+13753*me;let d=me*29+Math.floor(pe/25920);if((3*(d+1))%7<3)d+=1;return d}
+function hCorr(y){const a=hElapsed(y-1),b=hElapsed(y),c=hElapsed(y+1);if(c-b===356)return 2;if(b-a===382)return 1;return 0}
+const hNewYear=y=>HEB_EPOCH+hElapsed(y)+hCorr(y);
+const hYearDays=y=>hNewYear(y+1)-hNewYear(y);
+function hMonthDays(y,m){if([2,4,6,10,13].includes(m))return 29;if(m===12&&!hLeap(y))return 29;if(m===8&&![355,385].includes(hYearDays(y)))return 29;if(m===9&&[353,383].includes(hYearDays(y)))return 29;return 30}
+function hFixed(y,m,d){let t=hNewYear(y)+d-1;if(m<7){for(let k=7;k<=hLastMonth(y);k++)t+=hMonthDays(y,k);for(let k=1;k<m;k++)t+=hMonthDays(y,k)}else{for(let k=7;k<m;k++)t+=hMonthDays(y,k)}return t}
+function gFixed(y,m,d){const p=y-1;const md=[31,28,31,30,31,30,31,31,30,31,30,31];const leap=(y%4===0&&y%100!==0)||y%400===0;let doy=d;for(let i=0;i<m-1;i++)doy+=md[i];if(leap&&m>2)doy+=1;return 365*p+Math.floor(p/4)-Math.floor(p/100)+Math.floor(p/400)+doy}
+function hFromFixed(f){let y=Math.floor((f-HEB_EPOCH)/(35975351/98496))+1-1;while(hNewYear(y+1)<=f)y++;const start=f<hFixed(y,1,1)?7:1;let m=start;while(f>hFixed(y,m,hMonthDays(y,m)))m++;return{y,m,d:f-hFixed(y,m,1)+1}}
+const HMN=["","Nisan","Iyar","Sivan","Tammuz","Av","Elul","Tishrei","Cheshvan","Kislev","Tevet","Shevat","Adar","Adar II"];
+function hMonthName(h){if(h.m===12&&hLeap(h.y))return"Adar I";return HMN[h.m]}
+const dow=f=>((f%7)+7)%7; // 0=Sunday
+function purimMonth(y){return hLeap(y)?13:12}
+// returns {label, msg, level} for a fixed day
+function holidayInfo(f){
+  const h=hFromFixed(f),m=h.m,d=h.d,y=h.y,w=dow(f),L=hLeap(y);
+  const closed=t=>({label:t,msg:`${t} — restaurants are closed today. Some reopen late tonight after the chag; check Motzei Chag hours.`,level:"closed"});
+  const fast=t=>({label:t,msg:`${t} (fast day) — most restaurants stay closed until after the fast ends this evening.`,level:"closed"});
+  if(m===7){
+    if(d<=2)return closed(d===1?"Rosh Hashana (day 1)":"Rosh Hashana (day 2)");
+    if((d===3&&w!==6)||(d===4&&w===0&&dow(f-1)===6))return fast("Tzom Gedaliah");
+    if(d===9)return{label:"Erev Yom Kippur",msg:"Erev Yom Kippur — restaurants close early afternoon for the fast. Eat early.",level:"warn"};
+    if(d===10)return closed("Yom Kippur");
+    if(d===14)return{label:"Erev Sukkot",msg:"Erev Sukkot — most places close by early afternoon. Ask about sukkah seating for the week.",level:"warn"};
+    if(d===15)return closed("Sukkot (Yom Tov)");
+    if(d>=16&&d<=20)return{label:"Chol Hamoed Sukkot",msg:`Chol Hamoed Sukkot (day ${d-15}) — hours may differ from those listed; some places open late or close early. Call ahead and ask whether they have a sukkah.`,level:"warn"};
+    if(d===21)return{label:"Hoshana Rabba",msg:"Hoshana Rabba (last day of Chol Hamoed) — restaurants close early afternoon for Shemini Atzeret. Ask about a sukkah.",level:"warn"};
+    if(d===22)return closed("Shemini Atzeret / Simchat Torah");
+    if(d===23)return{label:"Isru Chag",msg:"Isru Chag — some places open late today after the chag.",level:"info"};
+  }
+  if((m===9&&d>=25)||(m===10&&(d<=2||(d===3&&hMonthDays(y,9)===29)))){const n=m===9?d-24:(hMonthDays(y,9)===30?d+6:d+5);return{label:"Chanukah",msg:`Chanukah (day ${n}) — normal hours. Bakeries and cafés push sufganiyot; the grill places are the higher-protein choice.`,level:"info"}}
+  if(m===10&&d===10)return fast("Asara B'Tevet");
+  if(m===11&&d===15)return{label:"Tu BiShvat",msg:"Tu BiShvat — normal hours.",level:"info"};
+  if(m===purimMonth(y)){
+    if((d===13&&w!==6)||(d===11&&w===4))return fast("Ta'anit Esther");
+    if(d===14)return{label:"Purim (outside Jerusalem)",msg:"Purim elsewhere in Israel — but Jerusalem keeps Shushan Purim tomorrow. Expect Purim hours and crowds tomorrow.",level:"info"};
+    if(d===15)return{label:"Shushan Purim (Jerusalem)",msg:"Shushan Purim in Jerusalem — many restaurants close for the seudah or run special hours; the city center is packed. Call first.",level:"warn"};
+  }
+  if(m===1){
+    if(d===14)return{label:"Erev Pesach",msg:"Erev Pesach — chametz places are closed; only Pesach-certified kitchens serve, and they close early afternoon.",level:"closed"};
+    if(d===15)return closed("Pesach (Yom Tov)");
+    if(d>=16&&d<=20)return{label:"Chol Hamoed Pesach",msg:`Chol Hamoed Pesach (day ${d-15}) — many places on this list are closed; those open serve Pesach menus under a Pesach teudah. Check for kitniyot and gebrokts notes and call first.`,level:"warn"};
+    if(d===21)return closed("Shvi'i shel Pesach");
+    if(d===22)return{label:"Isru Chag",msg:"Isru Chag Pesach — most restaurants reopen only after kashering, often a day or two late. Call first.",level:"warn"};
+  }
+  if(m===2&&d===18)return{label:"Lag BaOmer",msg:"Lag BaOmer — normal hours; grill places are busy.",level:"info"};
+  if(m===3){if(d===5)return{label:"Erev Shavuot",msg:"Erev Shavuot — restaurants close early afternoon.",level:"warn"};if(d===6)return closed("Shavuot");}
+  if(m===4&&((d===17&&w!==6)||(d===18&&w===0)))return fast("Shiva Asar B'Tammuz");
+  if(m===5){
+    if((d===9&&w!==6)||(d===10&&w===0))return fast("Tisha B'Av");
+    if(d<=8)return{label:"The Nine Days",msg:"The Nine Days — many meat restaurants close or serve only fish/dairy until after Tisha B'Av. Dairy and fish places are your best bet.",level:"warn"};
+    if(d===15)return{label:"Tu B'Av",msg:"Tu B'Av — normal hours.",level:"info"};
+  }
+  if(m===6&&d===29)return{label:"Erev Rosh Hashana",msg:"Erev Rosh Hashana — restaurants close early afternoon and stay closed through the chag.",level:"warn"};
+  if(w===5)return{label:"Erev Shabbat",msg:"Friday — most places close by early afternoon (some pizza/bagel shops earlier). Motzei Shabbat openings are ~1 hour after Shabbat ends.",level:"warn"};
+  if(w===6)return{label:"Shabbat",msg:"Shabbat — everything on this list is closed until Motzei Shabbat.",level:"closed"};
+  return null;
+}
+function todayBanner(now){
+  const f=gFixed(now.getFullYear(),now.getMonth()+1,now.getDate());
+  const h=hFromFixed(f),t=holidayInfo(f),tm=holidayInfo(f+1);
+  const hd=`${h.d} ${hMonthName(h)} ${h.y}`;
+  let parts=[];
+  if(t)parts.push(t.msg);
+  if(tm&&(tm.level==="closed"||tm.label.startsWith("Erev")===false&&tm.level==="warn")&&(!t||tm.label!==t.label)&&now.getHours()>=12)parts.push(`Tonight begins ${tm.label.replace(/ \(.*\)/,"")}${tm.level==="closed"?" — places close this afternoon":""}.`);
+  return{hebrew:hd,label:t?t.label:"",text:parts.join(" "),level:t?t.level:"info"};
+}
+// ---- Pesach view (driven by the calendar above)
+const HTODAY=hFromFixed(gFixed(new Date().getFullYear(),new Date().getMonth()+1,new Date().getDate()));
+let pesachView = HTODAY.m===1 && HTODAY.d>=8 && HTODAY.d<=22;
+let pf={open:false,kit:false,geb:false};
+function renderPesachChips(){
+  const c=$("#pesachChips"); c.hidden=!pesachView;
+  c.innerHTML=`<span class="locmsg" style="align-self:center">Pesach:</span>`+
+   [["open","Open on Pesach"],["kit","No kitniyot"],["geb","Non-gebrokts"]].map(([k,l])=>`<button class="chip" data-p="${k}" aria-pressed="${pf[k]}">${l}</button>`).join("")+
+   `<button class="chip" data-p="off">Hide Pesach view</button>`;
+}
+$("#pesachChips").addEventListener("click",e=>{const b=e.target.closest(".chip");if(!b)return;const k=b.dataset.p;
+  if(k==="off"){pesachView=false;pf={open:false,kit:false,geb:false};renderChips();renderPesachChips();render();return}
+  pf[k]=!pf[k];renderPesachChips();render();});
+
+// ---- Plus code (Open Location Code) decoder, short codes recovered near Jerusalem
+const OLC_AB="23456789CFGHJMPQRVWX",OLC_RES=[20,1,.05,.0025,.000125];
+function olcEncode(lat,lng){let a=lat+90,b=lng+180,c="";for(let i=0;i<5;i++){const r=OLC_RES[i];let d=Math.floor(a/r);a-=d*r;c+=OLC_AB[d];d=Math.floor(b/r);b-=d*r;c+=OLC_AB[d];if(i===3)c+="+"}return c}
+function olcDecode(code){const s=code.replace("+","").toUpperCase();let lat=-90,lng=-180,res=20;for(let i=0;i+1<Math.min(s.length,10);i+=2){res=OLC_RES[i/2];lat+=OLC_AB.indexOf(s[i])*res;lng+=OLC_AB.indexOf(s[i+1])*res}return{lat:lat+res/2,lng:lng+res/2}}
+function olcRecover(code,refLat,refLng){
+  code=code.toUpperCase().replace(/[^23456789CFGHJMPQRVWX+]/g,"");const plus=code.indexOf("+");if(plus<0)return null;
+  if(plus===8)return olcDecode(code);
+  const pad=8-plus;if(pad!==2&&pad!==4&&pad!==6)return null;
+  const res=Math.pow(20,2-pad/2),half=res/2;
+  const full=olcEncode(refLat,refLng).slice(0,pad)+code;const c=olcDecode(full);
+  if(refLat+half<c.lat&&c.lat-res>=-90)c.lat-=res;else if(refLat-half>c.lat&&c.lat+res<=90)c.lat+=res;
+  if(refLng+half<c.lng&&c.lng-res>=-180)c.lng-=res;else if(refLng-half>c.lng&&c.lng+res<=180)c.lng+=res;
+  return c;
+}
+function parseLocation(t){
+  t=(t||"").trim();
+  let m=t.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)||t.match(/[?&](?:q|ll|query|destination)=(-?\d+\.\d+),(-?\d+\.\d+)/)||t.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/)||t.match(/geo:(-?\d+\.\d+),(-?\d+\.\d+)/)||t.match(/^\s*(-?\d+\.\d+)[,\s]+(-?\d+\.\d+)/);
+  if(m)return{lat:+m[1],lng:+m[2],how:"coordinates"};
+  const pc=t.match(/([23456789CFGHJMPQRVWX]{2,8}\+[23456789CFGHJMPQRVWX]{2,3})/i);
+  if(pc){const c=olcRecover(pc[1],31.78,35.22);if(c)return{lat:c.lat,lng:c.lng,how:"plus code "+pc[1].toUpperCase()}}
+  return null;
+}
+
+// ---- location & walking time
+let me=null, sortNear=false, maxWalk=0;
+const LAND=[["Kotel / Old City",31.7767,35.2345],["Central Bus Station",31.7891,35.2030],["Mir Yeshiva / Beit Yisrael",31.7885,35.2244],["Geula (Malchei Yisrael)",31.7895,35.2150],["Machane Yehuda",31.7850,35.2120],["Ben Yehuda / Zion Square",31.7813,35.2192],["Mamilla",31.7776,35.2255],["Rav Shefa mall / Romema",31.7947,35.2084],["Sanhedria",31.7995,35.2185],["Ramat Eshkol (Paran)",31.8008,35.2277],["Har Hotzvim",31.8007,35.2102],["French Hill",31.8024,35.2385],["Pisgat Ze'ev",31.8207,35.2399],["Ramot Mall",31.8175,35.1944],["Givat Shaul / Kiryat Moshe",31.7879,35.1874],["Har Nof",31.7860,35.1738],["Bayit Vegan",31.7662,35.1842],["Rehavia",31.7750,35.2167],["Emek Refaim / German Colony",31.7648,35.2192],["Talpiot",31.7541,35.2174]];
+$("#landmark").innerHTML+=LAND.map((l,i)=>`<option value="${i}">${l[0]}</option>`).join("");
+const km=(a,b,c,d)=>{const R=6371,toR=x=>x*Math.PI/180,dl=toR(c-a),dg=toR(d-b);const h=Math.sin(dl/2)**2+Math.cos(toR(a))*Math.cos(toR(c))*Math.sin(dg/2)**2;return 2*R*Math.asin(Math.sqrt(h))};
+function walkMin(r){if(!me||r.lat==null)return null;const d=km(me.lat,me.lng,r.lat,r.lng)*1.3;return Math.max(1,Math.round(d/4.3*60))}
+function fmtWalk(m){return m==null?"":(m>=60?`~${Math.floor(m/60)} h ${m%60} min walk`:`~${m} min walk`)}
+function setMe(lat,lng,label){
+  me={lat,lng};sortNear=true;
+  $("#locMsg").textContent=`From ${label}. Estimates use straight-line ×1.3 at 4.3 km/h; tap Walking directions for real routing.`;
+  $("#clearLoc").hidden=false;$("#walkChips").hidden=false;
+  try{localStorage.setItem("jkf_loc",JSON.stringify({lat,lng,label}))}catch(e){}
+  renderWalkChips();render();
+}
+$("#locBtn").addEventListener("click",()=>{
+  if(!navigator.geolocation||window.self!==window.top){$("#locMsg").textContent="Inside this viewer the browser is not allowed to ask for location. Pick a landmark, or paste a Plus Code / Maps link (tap the button for how).";return}
+  $("#locMsg").textContent="Locating…";
+  navigator.geolocation.getCurrentPosition(p=>setMe(p.coords.latitude,p.coords.longitude,"your location"),
+   e=>{$("#locMsg").textContent=(e.code===1?"Location is blocked inside this viewer (no prompt is shown). ":"Couldn't get location. ")+"Pick a landmark, paste coordinates, or open this page in your phone's browser."},
+   {enableHighAccuracy:true,timeout:12000,maximumAge:60000});
+});
+$("#landmark").addEventListener("change",e=>{const l=LAND[+e.target.value];if(l)setMe(l[1],l[2],l[0]);});
+$("#coordBtn").addEventListener("click",()=>{
+  const t=prompt("In Google Maps: tap the blue dot (or long-press a spot) → you'll see a Plus Code like QC7Q+X8 Jerusalem, or coordinates like 31.7895, 35.2150. Copy and paste it here. (Short maps.app.goo.gl links don't contain the location.)");
+  if(!t)return;const r=parseLocation(t);
+  if(!r){$("#locMsg").textContent="Couldn't read that. Paste a Plus Code (e.g. QC7Q+X8), coordinates (31.7895, 35.2150) or a full google.com/maps link with @lat,lng.";return}
+  setMe(r.lat,r.lng,r.how);
+});
+$("#clearLoc").addEventListener("click",()=>{me=null;sortNear=false;maxWalk=0;$("#landmark").value="";$("#locMsg").textContent="";$("#clearLoc").hidden=true;$("#walkChips").hidden=true;try{localStorage.removeItem("jkf_loc")}catch(e){}render()});
+function renderWalkChips(){
+  const opts=[[0,"Any distance"],[10,"≤10 min"],[20,"≤20 min"],[30,"≤30 min"],[45,"≤45 min"]];
+  $("#walkChips").innerHTML=opts.map(([v,l])=>`<button class="chip" data-w="${v}" aria-pressed="${maxWalk===v}">${l}</button>`).join("")+`<button class="chip" id="sortBtn" aria-pressed="${sortNear}">Nearest first</button>`;
+}
+$("#walkChips").addEventListener("click",e=>{
+  const b=e.target.closest(".chip");if(!b)return;
+  if(b.id==="sortBtn"){sortNear=!sortNear}else{maxWalk=+b.dataset.w}
+  renderWalkChips();render();
+});
+const walkURL=r=>`https://www.google.com/maps/dir/?api=1&travelmode=walking&destination=${encodeURIComponent(r.addr+", Jerusalem")}`;
+
+const esc=s=>String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function chip(id,label,color,on){return `<button class="chip" data-id="${id}" aria-pressed="${on}">${color?`<span class="dot" style="--c:${color}"></span>`:""}${label}</button>`}
+function renderChips(){
+  $("#hechChips").innerHTML = Object.entries(H).map(([id,v])=>chip(id,v.label,v.c,state.h.has(id))).join("");
+  $("#kindChips").innerHTML = Object.entries(K).map(([id,l])=>chip(id,l,`var(--${id})`,state.k.has(id))).join("")+`<button class="chip" id="pesachToggle" aria-pressed="${pesachView}">🍷 Pesach view</button>`;
+}
+$("#hechChips").addEventListener("click",e=>{const b=e.target.closest(".chip");if(!b)return;const id=b.dataset.id;state.h.has(id)?state.h.delete(id):state.h.add(id);save();renderChips();render()});
+$("#kindChips").addEventListener("click",e=>{const b=e.target.closest(".chip");if(!b)return;if(b.id==="pesachToggle"){pesachView=!pesachView;if(!pesachView)pf={open:false,kit:false,geb:false};renderChips();renderPesachChips();render();return}const id=b.dataset.id;state.k.has(id)?state.k.delete(id):state.k.add(id);save();renderChips();render()});
+
+$("#q").addEventListener("input",e=>{state.q=e.target.value.trim().toLowerCase();$("#searchWrap").classList.toggle("has",!!state.q);render()});
+$("#clearQ").addEventListener("click",()=>{$("#q").value="";state.q="";$("#searchWrap").classList.remove("has");render();$("#q").focus()});
+
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
+  state.tab=t.dataset.tab;
+  document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",x===t));
+  ["verified","unconfirmed","excluded"].forEach(id=>$("#"+id).hidden=id!==state.tab);
+}));
+
+const P=r=>r.pesach||{};
+function matches(r){
+  if(pesachView){const p=P(r);
+    if(pf.open&&p.open!==true)return false;
+    if(pf.kit&&p.kitniyot!==false)return false;
+    if(pf.geb&&p.gebrokts!==false)return false;}
+  if(state.h.size&&!state.h.has(r.h))return false;
+  if(state.k.size&&!state.k.has(r.k))return false;
+  if(!state.q)return true;
+  const hay=[r.n,r.heb,r.t,r.area,r.addr,r.nut,r.order,H[r.h].label,K[r.k]].join(" ").toLowerCase();
+  return state.q.split(/\s+/).every(w=>hay.includes(w));
+}
+function pesachLine(r){const p=P(r);const y=v=>v===true?"yes":v===false?"no":"not verified";
+  if(p.open==null&&p.kitniyot==null&&p.gebrokts==null)return `<span class="warnmark">Not verified for Pesach ${HTODAY.y} — call before you go.</span>`+(p.note?" "+esc(p.note):"");
+  return `Open: ${y(p.open)} · Kitniyot served: ${y(p.kitniyot)} · Gebrokts served: ${y(p.gebrokts)}`+(p.note?" · "+esc(p.note):"");}
+function rowHTML(r,i){
+  const hc=H[r.h].c;
+  return `<div class="row" id="r${i}">
+    <button class="head" aria-expanded="false" data-i="${i}">
+      <span class="kind" style="--k:var(--${r.k})" title="${K[r.k]}"></span>
+      <span class="name">${esc(r.n)}${r.heb?`<span class="heb">${esc(r.heb)}</span>`:""}${r.warn?`<span class="warnmark" title="Conflicting reports">⚠</span>`:""}</span>
+      <span class="price">${"₪".repeat(r.price)}</span>
+      <span class="sub">${esc(r.t)} · ${esc(r.area)}${walkMin(r)!=null?` · <span class="walk">${fmtWalk(walkMin(r))}</span>`:(me&&r.lat==null?" · location unknown":"")}</span>
+    </button>
+    <div class="detail">
+      <dl>
+        <dt>Hechsher</dt><dd><span class="stamp" style="--hc:${hc}">${H[r.h].label}</span> <a href="${r.proof}" target="_blank" rel="noopener">${esc(r.plabel)}</a></dd>
+        <dt>Kashrus type</dt><dd>${K[r.k]}</dd>
+        <dt>Nutrition</dt><dd>${esc(r.nut)}${r.order?` — <em>${esc(r.order)}</em>`:""}</dd>
+        <dt>Reviews</dt><dd>${esc(r.rev)}</dd>
+        <dt>Hours</dt><dd>${esc(r.hours)}</dd>
+        <dt>Address</dt><dd>${esc(r.addr)}${r.area&&r.area!=="—"?", "+esc(r.area):""}</dd>
+        ${pesachView?`<dt>Pesach</dt><dd>${pesachLine(r)}</dd>`:""}
+      </dl>
+      ${r.warn?`<div class="warnbox">${esc(r.warn)}</div>`:""}
+      <div class="actions">
+        <a class="btn primary" href="${walkURL(r)}" target="_blank" rel="noopener">Walking directions</a>
+        <a class="btn" href="${M(r.addr)}" target="_blank" rel="noopener">Open in Maps</a>
+        ${r.phone?`<a class="btn" href="tel:${r.phone.replace(/[^\d+]/g,"")}">Call ${esc(r.phone)}</a>`:""}
+        <a class="btn" href="${r.proof}" target="_blank" rel="noopener">Hechsher source</a>
+      </div>
+    </div>
+  </div>`;
+}
+function render(){
+  let list=R.map((r,i)=>({r,i})).filter(x=>matches(x.r));
+  if(me&&maxWalk){list=list.filter(x=>{const w=walkMin(x.r);return w!=null&&w<=maxWalk});}
+  if(me&&sortNear){list.sort((a,b)=>(walkMin(a.r)??9e9)-(walkMin(b.r)??9e9));}
+  $("#status").textContent = (list.length===R.length ? `${R.length} verified places` : `${list.length} of ${R.length} places`)+(me&&maxWalk?` within ~${maxWalk} min walk`:"");
+  if(!list.length){$("#results").innerHTML=`<div class="empty">Nothing matches. ${pesachView&&(pf.open||pf.kit||pf.geb)?"Pesach status hasn't been verified for these places yet — the chips only show confirmed ones. ":""}${me&&maxWalk?"Try a longer walk time or ":"Try "}fewer filters or a different word — search covers name, food type, street and neighborhood.</div>`;return}
+  let html="";
+  if(me&&sortNear){$("#results").innerHTML=`<div class="group" style="--gc:var(--green)"><h2>Nearest first<span>${list.length}</span></h2>${list.map(x=>rowHTML(x.r,x.i)).join("")}</div>`;return}
+  for(const [id,v] of Object.entries(H)){
+    const g=list.filter(x=>x.r.h===id);
+    if(!g.length)continue;
+    html+=`<div class="group" style="--gc:${v.c}"><h2>Badatz ${v.label}<span>${g.length}</span></h2>${g.map(x=>rowHTML(x.r,x.i)).join("")}</div>`;
+  }
+  $("#results").innerHTML=html;
+}
+$("#results").addEventListener("click",e=>{
+  const b=e.target.closest(".head");if(!b)return;
+  const row=b.parentElement;const open=!row.classList.contains("open");
+  row.classList.toggle("open",open);b.setAttribute("aria-expanded",open);
+});
+$("#unconfList").innerHTML=UNCONF.map(([n,r])=>`<div class="row"><span class="n">${esc(n)}</span><span class="r">${esc(r)}</span></div>`).join("");
+$("#exclList").innerHTML=EXCL.map(([n,r])=>`<div class="row"><span class="n">${esc(n)}</span><span class="r">${esc(r)}</span></div>`).join("");
+renderPesachChips();renderChips();render();
+(function(){const b=todayBanner(new Date());const el=$("#banner");el.className="notice "+b.level;el.innerHTML=`<b>${esc(b.hebrew)}${b.label?" · "+esc(b.label):""}</b>${esc(b.text||"Normal hours today.")} Always check the teudah and its expiry date on the wall.`;})();
+try{const l=JSON.parse(localStorage.getItem("jkf_loc")||"null");if(l&&l.lat){const idx=LAND.findIndex(x=>x[0]===l.label);setMe(l.lat,l.lng,l.label);if(idx>=0)$("#landmark").value=idx;}}catch(e){}
+</script>
+</body>
+</html>
